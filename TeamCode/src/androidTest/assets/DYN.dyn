@@ -1,0 +1,7 @@
+// So this directory is used mainly for the storage of our comp DYN scripts
+// We put them in here so that we have a guaranteed runnable script during comps
+// Just in case the USB fails (DYN auto fallbacks to these scripts if USB fails)
+// But in general: Put known working DYN scripts into here, and make sure that the names match
+def_path Main start
+end
+// also DYN defaults to "Main" as the main function name, so no need to tell it what the name is
