@@ -1,10 +1,9 @@
 package org.firstinspires.ftc.teamcode.dynamite;
 
+import com.pedropathing.api.Paths;
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.BezierCurve;
-import com.pedropathing.geometry.BezierLine;
-import com.pedropathing.geometry.Pose;
-import com.pedropathing.paths.PathChain;
+import com.pedropathing.math.Pose;
+import com.pedropathing.paths.Path;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -36,9 +35,9 @@ public class PPInterface implements FTCInterface {
         if (!hasStartPosBeenSet) {
             hasStartPosBeenSet = true;
             if (pos.length == 2) {
-                pather.setStartingPose(new Pose(pos[0], pos[1]));
+                pather.setPose(new Pose(pos[0], pos[1]));
             } else if (pos.length == 3) {
-                pather.setStartingPose(new Pose(pos[0], pos[1], pos[2]));
+                pather.setPose(new Pose(pos[0], pos[1], pos[2]));
             }
         } else {
             throw new CommandException(line,"SetStartPose","Cannot set start pos when its already been set!");
@@ -79,7 +78,7 @@ public class PPInterface implements FTCInterface {
                     // make this as close to PP interaction as possible
                     preMoveProcess();
                     // use PP
-                    Pose currentPose = pather.getPose();
+                    Pose currentPose = pather.pose();
                     // build into a PathChain
                     ArrayList<Pose> poseList = new ArrayList<>();
                     poseList.add(currentPose);
@@ -90,19 +89,19 @@ public class PPInterface implements FTCInterface {
                         for (int i = 0; i < poseList.size(); i++) {
                             // convert to rad, because that's what PP uses
                             Pose oldPose = poseList.get(i);
-                            double poseAngle = Math.toRadians(oldPose.getHeading());
-                            poseList.set(i, new Pose(oldPose.getX(), oldPose.getY(), poseAngle));
+                            double poseAngle = Math.toRadians(oldPose.heading());
+                            poseList.set(i, new Pose(oldPose.x(), oldPose.y(), poseAngle));
                         }
                     }
-                    BezierCurve bezier = new BezierCurve(poseList);
-                    PathChain plannedpath = pather.pathBuilder().addPath(bezier).setLinearHeadingInterpolation(currentPose.getHeading(), endPose.getHeading()).build();
-                    pather.followPath(plannedpath);
+                    Path plannedpath = Paths.curve(poseList.toArray(new Pose[0])).linear(currentPose.heading(),endPose.heading());
+                    pather.follow(plannedpath);
                 }
                 case TurnTo -> {
                     preMoveProcess();
-                    double angleDelta = pather.getPose().getHeading()-move.heading;
-                    if (!processInRad) angleDelta = Math.toRadians(angleDelta);
-                    pather.turn(angleDelta);
+                    Pose current = pather.pose();
+                    Pose target = new Pose(current.x(),current.y(),move.heading);
+                    Path plannedPath = Paths.line(current,target).linear(current,target);
+                    pather.follow(plannedPath);
                 }
                 case GoTo -> {
                     Pose endPose;
@@ -116,12 +115,11 @@ public class PPInterface implements FTCInterface {
                                 move.target[0],
                                 move.target[1]);
                     }
-                    if (!processInRad) endPose = new Pose(endPose.getX(),endPose.getY(),Math.toRadians(endPose.getHeading()));
+                    if (!processInRad) endPose = new Pose(endPose.x(),endPose.y(),Math.toRadians(endPose.heading()));
                     preMoveProcess();
-                    Pose start = pather.getPose();
-                    BezierLine linePath = new BezierLine(start,endPose);
-                    PathChain calculatedPath = pather.pathBuilder().addPath(linePath).setLinearHeadingInterpolation(start.getHeading(), endPose.getHeading()).build();
-                    pather.followPath(calculatedPath);
+                    Pose start = pather.pose();
+                    Path plannedPath = Paths.line(start,endPose).linear(start,endPose);
+                    pather.follow(plannedPath);
                 }
                 default -> throw new RuntimeException("Pedro Pathing does not support this kind of movement!");
             }

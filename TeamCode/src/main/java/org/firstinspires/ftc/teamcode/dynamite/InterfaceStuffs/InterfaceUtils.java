@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.dynamite.InterfaceStuffs;
 
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 
 import org.firstinspires.ftc.teamcode.dynamite.DYNCore.CommandException;
 import org.firstinspires.ftc.teamcode.dynamite.DYNCore.variables.Variable;
@@ -229,7 +229,7 @@ public class InterfaceUtils {
         return var;
     }
     public final Variable makePoseVar(Pose value){
-        Variable var = new DynFieldPos(value.getX(),value.getY(),value.getHeading());
+        Variable var = new DynFieldPos(value.x(),value.y(),value.heading());
         interpreter.registerVar(var);
         return var;
     }
