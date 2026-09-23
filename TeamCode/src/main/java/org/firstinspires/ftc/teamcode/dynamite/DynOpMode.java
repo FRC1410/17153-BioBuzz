@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode.dynamite;
 
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.RobotLog;
 
@@ -386,7 +386,7 @@ public abstract class DynOpMode extends OpMode {
         return var;
     }
     protected final Variable makePoseVar(Pose value){
-        Variable var = new DynFieldPos(value.getX(),value.getY(),value.getHeading());
+        Variable var = new DynFieldPos(value.x(),value.y(),value.heading());
         interpreter.registerVar(var);
         return var;
     }
