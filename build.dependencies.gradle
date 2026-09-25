@@ -17,5 +17,7 @@ dependencies {
 
     implementation 'com.pedropathing:revhub:3.0.0'
     implementation 'com.pedropathing:tuning:1.0.0'
+    // needed for vision math (just makes my life so much easier)
+    implementation 'org.ejml:ejml-simple:0.43.1'
 }
 
