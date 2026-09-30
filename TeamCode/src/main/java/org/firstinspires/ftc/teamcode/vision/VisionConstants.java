@@ -1,23 +1,28 @@
 package org.firstinspires.ftc.teamcode.vision;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import static org.firstinspires.ftc.teamcode.vision.TagPivotPoint.hiveType.*;
 
-import org.ejml.simple.SimpleMatrix;
 import org.firstinspires.ftc.robotcore.external.matrices.MatrixF;
+
+import org.ejml.simple.SimpleMatrix;
+
+import java.util.HashMap;
+import java.util.Map;
 
 // this is the class where we do as much
 // of the precalculated stuff as possible
 // to reduce time during our already constrained
 // op mode loop
 public class VisionConstants {
+    // robot constants
+    public static final double turretRadius = 0;
+    public static final double TurretCenterOffsetX = 0;
+    public static final double TurretCenterOffsetY = 0;
+    public static final double turretStartToRobotForwardDelta = 0;
+    public static final double[] turretOffsetVector = {TurretCenterOffsetX,TurretCenterOffsetY};
     // this stuff is thread safe bc why not
     private static volatile boolean hasInited = false;
-    public static synchronized boolean inited(){
-        return hasInited;
-    }
+    public static synchronized boolean inited(){return hasInited;}
     // world constants Simple matrix can be a full 3x3 or a 3d vector. very usefull.
     public static final SimpleMatrix CV2FTC = new SimpleMatrix(new double[][]{
         {1, 0, 0}, // this matrix converts anything form

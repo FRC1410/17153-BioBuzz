@@ -1,9 +1,6 @@
 package org.firstinspires.ftc.teamcode.vision;
 
-import static org.firstinspires.ftc.teamcode.vision.VisionConstants.CAM_OFFSET_X;
-import static org.firstinspires.ftc.teamcode.vision.VisionConstants.CAM_OFFSET_Y;
 import static org.firstinspires.ftc.teamcode.vision.VisionConstants.TAG_WIDTH;
-import static org.firstinspires.ftc.teamcode.vision.VisionConstants.TERMINAL_ANGLE_VECTOR;
 
 import android.util.Size;
 
@@ -62,35 +59,11 @@ public class Vision {
         }
     }
 
-    private double[] shiftPosFromCamOffset(double[] ogPos){
-        // this is the complicated part where we start our toes a little bit more into vector math (scary ik)
-        // the first step is to calculate the robot facing vector, we just gotta rotate the zero vector by the robot angle
-        double[] facingVect = {
-                TERMINAL_ANGLE_VECTOR[0]*Math.cos(ogPos[2])- TERMINAL_ANGLE_VECTOR[1]*Math.sin(ogPos[2]),
-                TERMINAL_ANGLE_VECTOR[0]*Math.sin(ogPos[2])+ TERMINAL_ANGLE_VECTOR[1]*Math.cos(ogPos[2])};
-        double length = Math.sqrt(facingVect[0]*facingVect[0]+facingVect[1]*facingVect[1]); // simple pythagoras (not so scary)
-        // we calculate F hat and P hat, as our robot local space matrix constructors, we just gonna normalise the vector just in case.
-        double[] F_hat = {
-                facingVect[0]/length,
-                facingVect[1]/length};
-        double[] P_hat = {
-                -F_hat[1],
-                F_hat[0]};
-        // now we calculate the world based offset
-        double[] worldOffset = {
-                CAM_OFFSET_X*F_hat[0]+CAM_OFFSET_Y*P_hat[0],
-                CAM_OFFSET_X*F_hat[1]+CAM_OFFSET_Y*P_hat[1]};
-        // and apply the offset to a copy of input (better for adaptability)
-        double[] out = ogPos.clone();
-        out[0] += worldOffset[0];
-        out[1] += worldOffset[1];
-        return out;
-    }
-
     private double blueHiveAngle = -1;
     private double redHiveAngle = -1;
 
     public double[] getRobotPoseFromTag(AprilTagSingleDetection tag){
+        // TODO: simplify to raw arithmatic for efficiency
         // 0.Gather raw tag data
         TagPivotPoint tagPivot = VisionConstants.idPivotMap.get(tag.id);
         AprilTagPoseRaw tagRaw = tag.rawPose;
@@ -142,9 +115,9 @@ public class Vision {
         return new double[]{x,y,h};
     }
 
-    public double[] getRobotPos(){
-        blueHiveAngle = 0;
-        redHiveAngle = 0;
+    public double[] getCameraPose(){
+        blueHiveAngle = -1;
+        redHiveAngle = -1;
         double[] poseSum = new double[3];
         double[] currentDeteciton;
         int detectionCount = detections.size();
@@ -161,36 +134,41 @@ public class Vision {
         if (redHiveAngle != -1) redHiveAngle/=detectionCount;
         return poseSum;
     }
-    public Pose getPedroPose(){
-        double[] roboPos = getRobotPos();
+    public double[] getRobotPose(double turretAngle){
+        // TODO: redo cam->robot pose math
+        double[] camPose = getCameraPose();
+        double[] camTurretVec = {
+            VisionConstants.turretRadius*Math.cos(turretAngle),
+            VisionConstants.turretRadius*Math.sin(turretAngle)};
+        double[] camToRobotVector = {
+            -(VisionConstants.TurretCenterOffsetX+camTurretVec[0]),
+            -(VisionConstants.TurretCenterOffsetY+camTurretVec[1])};
+        double robotHeading = camPose[2]+turretAngle+VisionConstants.turretStartToRobotForwardDelta;
+        // rotate camToRobotVector by full robot angle
+        camToRobotVector[0] = camToRobotVector[0]*Math.cos(robotHeading) + camToRobotVector[1]*Math.sin(robotHeading);
+        camToRobotVector[0] = camToRobotVector[0]*Math.sin(robotHeading) + camToRobotVector[1]*Math.cos(robotHeading);
+        // compose output
+        double[] out = {
+            camPose[0]+camToRobotVector[0],
+            camPose[1]+camToRobotVector[1],
+            robotHeading};
+        return out;
+    }
+    public Pose getPedroPose(double turretAngle){
+        double[] roboPos = getRobotPose(turretAngle);
         return new Pose(roboPos[0], roboPos[1], roboPos[2]);
     }
 
-    public void update(){
+    public boolean update(){
+        // returns weather or not there have been any new detections since last update
+        boolean hasNewDetections = !(april_tag.getFreshDetections()==null);
         detections.clear();
         for (AprilTagDetection detection : april_tag.getDetections()){
             if (detection instanceof AprilTagSingleDetection){ // filter out cluster detections that have no IDs to ensure that we have only apriltags with IDs.
                 detections.add((AprilTagSingleDetection)detection);
             }
         }
-    }
-
-    Pose lastPose = null;
-    public boolean hasNewPos(){
-        Pose newPose = getPedroPose();
-        if (lastPose == null){
-            lastPose = newPose;
-            return true;
-        }
-        // because PP pose objects don't have in-built equals, we manually check each value
-        if (newPose.x() != lastPose.x() ||
-                newPose.y() != lastPose.y() ||
-                newPose.heading() != lastPose.heading()){
-            lastPose = newPose;
-            return true;
-        }
-        lastPose = newPose;
-        return false;
+        return hasNewDetections;
     }
 
     public double getRedHiveAngle(){
