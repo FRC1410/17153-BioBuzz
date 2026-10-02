@@ -36,10 +36,6 @@ public abstract class DynOpMode extends OpMode {
     public boolean doesDYNUseRadians(){
         return false;
     }
-    private double followerUpdateRate = 50.0;
-    public final void setFollowerUpdateRate(double frequency){
-        followerUpdateRate = frequency;
-    }
 
     private int DYNThreadPriority = Thread.MIN_PRIORITY;
     private int UpdateFollowerPriority = Thread.currentThread().getPriority()+1;
@@ -53,10 +49,10 @@ public abstract class DynOpMode extends OpMode {
     // DYN language scripts
     private DYNInterpreter interpreter;
     private PPInterface ppInterface;
-    private TimedLoopThread followerUpdateThread;
     private Thread DYNThread;
     private boolean DYNUseRad;
 
+    private Follower follower;
     @Override
     public final void init(){
         DYNUseRad = doesDYNUseRadians();
@@ -72,7 +68,8 @@ public abstract class DynOpMode extends OpMode {
         // faults.reset() / workersShutDown are handled in internalPreInit(), which runs
         // before this method and cannot be skipped by a subclass override
         // init PP and PPInterface
-        ppInterface = new PPInterface(buildFollower(),hardwareMap,telemetry,DYNUseRad);
+        follower = buildFollower();
+        ppInterface = new PPInterface(follower,hardwareMap,DYNUseRad);
         // init the DYNInterpreter
         interpreter = new DYNInterpreter(ppInterface,DYNUseRad);
         if (loadFromUSB) interpreter.loadFromUSB();
@@ -98,14 +95,6 @@ public abstract class DynOpMode extends OpMode {
         }, "DYN");
         DYNThread.setDaemon(true);
         DYNThread.setUncaughtExceptionHandler((th, t) -> faults.report(FaultReporter.DYN, t));
-        // init follower update thread
-        followerUpdateThread = new TimedLoopThread(
-                this::updateFollower,
-                followerUpdateRate,
-                cause -> {
-                    if (cause != null) faults.report(FaultReporter.FOLLOWER, cause);
-                    else faults.noteExit(Thread.currentThread(), "update loop stopped");
-                });
         // run user code
         onInit();
     }
@@ -120,13 +109,8 @@ public abstract class DynOpMode extends OpMode {
         telemetry.setMsTransmissionInterval(100);
         // set thread priorities
         DYNThread.setPriority(DYNThreadPriority);
-        followerUpdateThread.setPriority(UpdateFollowerPriority);
         // start running DYN code
         DYNThread.start();
-        // start the pather update loop
-        followerUpdateThread.start();
-        // link up followerUpdateThread to the interface
-        ppInterface.linkPatherUpdateThread(followerUpdateThread);
         // run user code
         onStart();
     }
@@ -135,6 +119,7 @@ public abstract class DynOpMode extends OpMode {
         // run any requested jFuncs
         processJFuncCalls();
         processTelemetry();
+        processMovement();
         checkWorkerThreads();
         // run user code
         onLoop();
@@ -159,12 +144,11 @@ public abstract class DynOpMode extends OpMode {
     public void onInitLoop(){};
     public void onStart(){};
     public abstract void onLoop();
-    public abstract void updateFollower();
     public void onStop(){}
 
     private void processJFuncCalls() {
         // this ensures that only one thread is touching this handshake process at a time.
-        synchronized (ppInterface.lock){
+        synchronized (ppInterface.jFuncLock){
             if (ppInterface.requested){
                 ppInterface.requested = false;
                 if (ppInterface.wantOutput){
@@ -177,8 +161,8 @@ public abstract class DynOpMode extends OpMode {
                             ppInterface.funcID = null;
                             ppInterface.inVar = null;
                             // notify DYN thread
-                            ppInterface.processed = true;
-                            ppInterface.lock.notify();
+                            ppInterface.jFuncProcessed = true;
+                            ppInterface.jFuncLock.notify();
                         } else {
                             throw new CommandException(ppInterface.ranLine,"Move robot","Unknown jFunc ID: "+ppInterface.funcID);
                         }
@@ -190,8 +174,8 @@ public abstract class DynOpMode extends OpMode {
                             ppInterface.funcID = null;
                             ppInterface.inVar = null;
                             // notify DYN thread
-                            ppInterface.processed = true;
-                            ppInterface.lock.notify();
+                            ppInterface.jFuncProcessed = true;
+                            ppInterface.jFuncLock.notify();
                         } else {
                             throw new CommandException(ppInterface.ranLine,"Move robot","Unknown jFunc ID: "+ppInterface.funcID);
                         }
@@ -207,8 +191,8 @@ public abstract class DynOpMode extends OpMode {
                             ppInterface.inVar = null;
                             ppInterface.outVar = null;
                             // notify DYN thread
-                            ppInterface.processed = true;
-                            ppInterface.lock.notify();
+                            ppInterface.jFuncProcessed = true;
+                            ppInterface.jFuncLock.notify();
                         } else {
                             throw new CommandException(ppInterface.ranLine,"Move robot","Unknown jFunc ID: "+ppInterface.funcID);
                         }
@@ -221,12 +205,40 @@ public abstract class DynOpMode extends OpMode {
                             ppInterface.inVar = null;
                             ppInterface.outVar = null;
                             // notify DYN thread
-                            ppInterface.processed = true;
-                            ppInterface.lock.notify();
+                            ppInterface.jFuncProcessed = true;
+                            ppInterface.jFuncLock.notify();
                         } else {
                             throw new CommandException(ppInterface.ranLine,"Move robot","Unknown jFunc ID: "+ppInterface.funcID);
                         }
                     }
+                }
+            }
+        }
+    }
+
+    private boolean runningMovementPath = false;
+    private void processMovement(){
+        synchronized (ppInterface.PPactionLock){
+            // update the actively running path
+            if (runningMovementPath && !follower.isBusy()){
+                runningMovementPath = false;
+                ppInterface.PPactionLock.notify();
+                return;
+            }
+            // check for requests
+            else if (ppInterface.hasRequest){
+                if (ppInterface.positionRequest){
+                    Pose robotPose = follower.pose();
+                    ppInterface.robotX = robotPose.x();
+                    ppInterface.robotY = robotPose.y();
+                    ppInterface.robotH = robotPose.heading();
+                    ppInterface.requestProcessed = true;
+                    ppInterface.PPactionLock.notify();
+                    return;
+                } else if (ppInterface.pathRequest){
+                    follower.follow(ppInterface.requestedPath);
+                    runningMovementPath = true;
+                    return;
                 }
             }
         }
@@ -239,9 +251,6 @@ public abstract class DynOpMode extends OpMode {
     private void checkWorkerThreads(){
         // liveness audit first: this is what catches a thread that died without throwing
         faults.auditThread(FaultReporter.DYN, DYNThread);
-        if (followerUpdateThread != null){
-            faults.auditThread(FaultReporter.FOLLOWER, followerUpdateThread.getThread());
-        }
 
         if (!faults.hasPending()) return;
 
@@ -277,13 +286,7 @@ public abstract class DynOpMode extends OpMode {
         } catch (RuntimeException e) {
             RobotLog.ww(FaultReporter.TAG, "interpreter.halt() failed: %s", e);
         }
-        try {
-            // bounded, and TimedLoopThread.stop no longer joins under its own monitor,
-            // so this cannot stall the OpMode thread past the SDK watchdog
-            if (followerUpdateThread != null) followerUpdateThread.stop(250);
-        } catch (RuntimeException e) {
-            RobotLog.ww(FaultReporter.TAG, "follower thread stop failed: %s", e);
-        }
+
         try {
             if (DYNThread != null && DYNThread.isAlive()){
                 DYNThread.interrupt();

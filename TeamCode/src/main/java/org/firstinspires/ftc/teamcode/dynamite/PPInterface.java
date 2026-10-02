@@ -6,7 +6,6 @@ import com.pedropathing.math.Pose;
 import com.pedropathing.paths.Path;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.dynamite.DYNCore.CommandException;
 import org.firstinspires.ftc.teamcode.dynamite.DYNCore.commands.Command;
 import org.firstinspires.ftc.teamcode.dynamite.DYNCore.variables.Variable;
@@ -18,15 +17,13 @@ import java.util.Arrays;
 
 public class PPInterface implements FTCInterface {
     private final HardwareMap hardwareMap;
-    private final Telemetry telemetry;
     private final Follower pather;
     private boolean hasStartPosBeenSet;
     private final boolean processInRad;
 
-    public PPInterface(Follower pather, HardwareMap hardwareMap, Telemetry telemetry, boolean processInRad){
+    public PPInterface(Follower pather, HardwareMap hardwareMap, boolean processInRad){
         this.processInRad = processInRad;
         this.hardwareMap = hardwareMap;
-        this.telemetry = telemetry;
         this.pather = pather;
     }
 
@@ -76,9 +73,8 @@ public class PPInterface implements FTCInterface {
                         }
                     }
                     // make this as close to PP interaction as possible
-                    preMoveProcess();
                     // use PP
-                    Pose currentPose = pather.pose();
+                    Pose currentPose = getRobotPose();
                     // build into a PathChain
                     ArrayList<Pose> poseList = new ArrayList<>();
                     poseList.add(currentPose);
@@ -97,8 +93,7 @@ public class PPInterface implements FTCInterface {
                     pather.follow(plannedpath);
                 }
                 case TurnTo -> {
-                    preMoveProcess();
-                    Pose current = pather.pose();
+                    Pose current = getRobotPose();
                     Pose target = new Pose(current.x(),current.y(),move.heading);
                     Path plannedPath = Paths.line(current,target).linear(current,target);
                     pather.follow(plannedPath);
@@ -116,48 +111,70 @@ public class PPInterface implements FTCInterface {
                                 move.target[1]);
                     }
                     if (!processInRad) endPose = new Pose(endPose.x(),endPose.y(),Math.toRadians(endPose.heading()));
-                    preMoveProcess();
-                    Pose start = pather.pose();
+                    Pose start = getRobotPose();;
                     Path plannedPath = Paths.line(start,endPose).linear(start,endPose);
-                    pather.follow(plannedPath);
+                    submitRobotPath(plannedPath);
                 }
                 default -> throw new RuntimeException("Pedro Pathing does not support this kind of movement!");
             }
-            // wait for the move to end
-            postMoveProcess();
         } else {
             throw new CommandException(line,"Move","Cannot move robot until start pose has been set!");
         }
     }
 
-    private void preMoveProcess(){
-        patherUpdateThread.stop();
-    }
-    private void postMoveProcess(){
-        // we wait until PP is done moving
-        long periodNanos = (long) (1_000_000_000.0 / patherUpdateThread.getUpdateRate());
-        while (pather.isBusy()){
-            // limit to update limit
-            long startTime = System.nanoTime();
-            patherUpdateThread.itterUpdate();
-            long elapsed = System.nanoTime()-startTime;
-            long remaining = periodNanos - elapsed;
-            long millis = remaining / 1_000_000;
-            int nanos = (int) (remaining % 1_000_000);
-            if (millis > 0) {
+    public volatile boolean requestProcessed = false;
+    public final Object PPactionLock = new Object();
+    public volatile boolean positionRequest = false;
+    public volatile boolean pathRequest = false;
+    public volatile boolean hasRequest = false;
+    public volatile Path requestedPath = null;
+    public volatile double robotX = -1;
+    public volatile double robotY = -1;
+    public volatile double robotH = -1;
+    public Pose getRobotPose(){
+        synchronized (PPactionLock){
+            // reset to defaults
+            robotX = -1;
+            robotY = -1;
+            robotH = -1;
+            // submit request
+            pathRequest = false;
+            requestProcessed = false;
+            positionRequest = true;
+            hasRequest = true;
+            while (!requestProcessed){
                 try {
-                    Thread.sleep(millis, nanos);
-                } catch (InterruptedException e) {
-                    break;
+                    PPactionLock.wait();
+                } catch (InterruptedException e){
+                    throw new RuntimeException(e);
+                }
+            }
+            return new Pose(robotX,robotY,robotH);
+        }
+    }
+    public void submitRobotPath(Path calculatedPath){
+        synchronized (PPactionLock){
+            // set values
+            requestedPath = calculatedPath;
+            // request action
+            requestProcessed = false;
+            positionRequest = false;
+            pathRequest = true;
+            hasRequest = true;
+            // wait for PP to finish move
+            while (!requestProcessed){
+                try {
+                    PPactionLock.wait();
+                } catch (InterruptedException e){
+                    throw new RuntimeException(e);
                 }
             }
         }
-        patherUpdateThread.start();
     }
 
     public volatile boolean requested = false;
-    public volatile boolean processed = false;
-    public final Object lock = new Object(); // bc ofc Android Studio says it should be final, not volatile
+    public volatile boolean jFuncProcessed = false;
+    public final Object jFuncLock = new Object(); // bc ofc Android Studio says it should be final, not volatile
     public volatile String funcID = null;
     public volatile int ranLine;
     public volatile boolean wantOutput = false;
@@ -166,7 +183,7 @@ public class PPInterface implements FTCInterface {
     @Override
     public Variable runJFunc(int line, boolean wantOutput, String ID) {
         // ensure that only one thread is actually using the related variables
-        synchronized (lock){
+        synchronized (jFuncLock){
             // set stuff
             funcID = ID;
             ranLine = line;
@@ -174,12 +191,12 @@ public class PPInterface implements FTCInterface {
             inVar = null;
             outVar = null;
             // request processing
-            processed = false;
+            jFuncProcessed = false;
             requested = true;
             // wait for lock release (aka: the function was run by the main thread)
-            while (!processed) {
+            while (!jFuncProcessed) {
                 try {
-                    lock.wait();
+                    jFuncLock.wait();
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
@@ -189,7 +206,7 @@ public class PPInterface implements FTCInterface {
     }
     @Override
     public Variable runJFunc(int line, boolean wantOutput, String ID, Variable in) {
-        synchronized (lock){
+        synchronized (jFuncLock){
             // set stuff
             funcID = ID;
             ranLine = line;
@@ -197,12 +214,12 @@ public class PPInterface implements FTCInterface {
             inVar = in;
             outVar = null;
             // request processing
-            processed = false;
+            jFuncProcessed = false;
             requested = true;
             // wait for lock release
-            while (!processed) {
+            while (!jFuncProcessed) {
                 try {
-                    lock.wait();
+                    jFuncLock.wait();
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
@@ -226,11 +243,6 @@ public class PPInterface implements FTCInterface {
     @Override
     public HardwareMap getHardwareMap() {
         return hardwareMap;
-    }
-
-    TimedLoopThread patherUpdateThread;
-    public void linkPatherUpdateThread(TimedLoopThread followerUpdateThread) {
-        patherUpdateThread = followerUpdateThread;
     }
 
     private Thread DYNThread;
