@@ -21,7 +21,7 @@ public class Intake {
 
     }
 
-    public void runStorage(double motorSpeed) {
+    public void runIntake(double motorSpeed) {
         this.intake1.setVelocity(motorSpeed);
     }
 
