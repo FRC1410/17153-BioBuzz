@@ -25,5 +25,8 @@ public class Spindexer {
                 break;
         }
     }
+    public void gotoPos(RobotStates.SpindexerStates state){
+        //test
+    }
 
 }
