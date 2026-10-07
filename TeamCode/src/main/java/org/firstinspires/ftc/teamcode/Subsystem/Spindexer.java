@@ -26,7 +26,20 @@ public class Spindexer {
         }
     }
     public void gotoPos(RobotStates.SpindexerStates state){
-        //test
+        switch (state){
+            case P1:
+                this.dexter.setPower(1);
+                break;
+            case P2:
+                this.dexter.setPower(1);
+                break;
+            case P3:
+                this.dexter.setPower(1);
+                break;
+            case P4:
+                this.dexter.setPower(1);
+                break;    
+        }
     }
 
 }
