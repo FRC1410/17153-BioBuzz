@@ -22,7 +22,7 @@ public class Intake {
     }
 
     public void runIntake(double motorSpeed) {
-        this.intake1.setVelocity(motorSpeed);
+        this.intake1.setVelocity(motorSpeed * 3000);
     }
 
 }
