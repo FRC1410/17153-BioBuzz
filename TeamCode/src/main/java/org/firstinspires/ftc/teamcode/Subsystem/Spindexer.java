@@ -22,6 +22,11 @@ public class Spindexer {
     }
     public void run(RobotStates.SpindexerStates state){
         this.dexter.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        if(state == SpindexerStates.NEUTRAL){
+            state = SpindexerStates.ROTATING;
+        }else{
+            state = SpindexerStates.NEUTRAL;
+        }
         switch (state){
             case NEUTRAL:
                 this.dexter.setPower(0);
