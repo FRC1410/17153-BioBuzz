@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.Subsystem;
 
 import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.FORWARD;
 import static org.firstinspires.ftc.teamcode.Util.IDs.INTAKE_MOTOR_ID;
+import static org.firstinspires.ftc.teamcode.Util.Constants.TICKS_PER_REVOLUTION;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -19,10 +20,11 @@ public class Intake {
 
         this.intake1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        this.intake1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
     public void runIntake(double motorSpeed) {
-        this.intake1.setVelocity(motorSpeed * 3000);
+        this.intake1.setVelocity(motorSpeed * TICKS_PER_REVOLUTION);
     }
 
 }
