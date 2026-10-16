@@ -3,11 +3,12 @@ package org.firstinspires.ftc.teamcode.Subsystem;
 import static org.firstinspires.ftc.teamcode.Util.Constants.Turret.*;
 import static org.firstinspires.ftc.teamcode.Util.IDs.Turret.*;
 
-import com.pedropathing.controllers.PIDController;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+
+import org.firstinspires.ftc.teamcode.Util.PIDController;
 
 public class Turret {
     private DcMotorEx turretSpinMotor;
@@ -45,20 +46,22 @@ public class Turret {
     }
 
     public double getTargetSpinPosition(){
-        return targetSpinPosition;
+        return targetSpinPosition/TICKS_PER_TURRET_REVOLUTION;
     }
      public void setTargetSpinPosition(double target){
-        targetSpinPosition = target;
+        targetSpinPosition = target*TICKS_PER_TURRET_REVOLUTION;
      }
 
      public double getSpinPosition(){
-        return turretSpinMotor.getCurrentPosition();
+         return ((double) turretSpinMotor.getCurrentPosition()) / TICKS_PER_TURRET_REVOLUTION;
      }
 
-     public void goToTargetSpinPosition(){
-        double PID = turretPIDController.calculate(targetSpinPosition, this.getSpinPosition());
-        this.turretSpinMotor.setVelocity(PID);
-     }
+    public void goToTargetPos() {
+        turretPIDController.setIntegral(Math.min(turretPIDController.getIntegral(), TICKS_PER_TURRET_REVOLUTION * 3));
+        double calc = turretPIDController.calculate(targetSpinPosition, turretSpinMotor.getCurrentPosition());
+
+        this.turretSpinMotor.setVelocity(calc);
+    }
 
      public double getTurretSpeed(){
         return turretMotor.getVelocity();
@@ -71,8 +74,5 @@ public class Turret {
      public void setHoodPosition(double pos){
         hoodServo.setPosition(pos);
      }
-
-
-
 
 }

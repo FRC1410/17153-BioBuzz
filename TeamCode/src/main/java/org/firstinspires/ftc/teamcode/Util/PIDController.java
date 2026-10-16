@@ -45,6 +45,14 @@ public class PIDController {
         return output;
     }
 
+    public double getIntegral() {
+        return integral;
+    }
+
+    public void setIntegral(double _integral) {
+        integral = _integral;
+    }
+
     public void reset() {
         integral = 0;
         previousError = 0;

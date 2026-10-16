@@ -9,6 +9,7 @@ public class Constants {
         public static final Servo.Direction HOOD_DIRECTION = Servo.Direction.FORWARD;
         public static final DcMotorSimple.Direction TURRET_DIRECTION = DcMotorSimple.Direction.FORWARD;
         public static final DcMotorSimple.Direction TURRET_SPIN_DIRECTION = DcMotorSimple.Direction.FORWARD;
+        public static final double TICKS_PER_TURRET_REVOLUTION = 81.92 * 5;
 
     }
 }
