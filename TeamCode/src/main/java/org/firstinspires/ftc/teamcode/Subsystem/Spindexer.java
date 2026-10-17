@@ -14,7 +14,7 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 public class Spindexer {
     private DcMotorEx dexter;
-    private RobotStates.SpindexerStates dexerState = SpindexerStates.NEUTRAL;
+//    private RobotStates.SpindexerStates dexerState = SpindexerStates.NEUTRAL;
 
     public void init(HardwareMap hardwareMap){
         this.dexter = hardwareMap.get(DcMotorEx.class, SPINDEXER_ID);
@@ -37,19 +37,26 @@ public class Spindexer {
         }
     }
     public void gotoPos(RobotStates.SpindexerStates state){
-        this.dexter.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         switch (state){
             case P1:
                 this.dexter.setTargetPosition(0);
+                this.dexter.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                this.dexter.setPower(.9);
                 break;
             case P2:
                 this.dexter.setTargetPosition(90);
+                this.dexter.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                this.dexter.setPower(.9);
                 break;
             case P3:
                 this.dexter.setTargetPosition(180);
+                this.dexter.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                this.dexter.setPower(.9);
                 break;
             case P4:
                 this.dexter.setTargetPosition(270);
+                this.dexter.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                this.dexter.setPower(.9);
                 break;
         }
     }

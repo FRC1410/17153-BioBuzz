@@ -34,8 +34,8 @@ public class Robot extends OpMode {
         if(DEXTER_P4.get()){
             this.dexter.gotoPos(RobotStates.SpindexerStates.P4);
         }
-        if(DEXTER_TOGGLE.get()){
-
-        }
+//        if(DEXTER_TOGGLE.get()){
+//            this.dexter.run();
+//        }
     }
 }
