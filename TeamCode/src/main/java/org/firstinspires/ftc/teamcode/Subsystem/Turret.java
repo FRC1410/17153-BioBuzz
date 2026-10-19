@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.Subsystem;
 
 import static org.firstinspires.ftc.teamcode.Util.Constants.Turret.*;
 import static org.firstinspires.ftc.teamcode.Util.IDs.Turret.*;
+import static org.firstinspires.ftc.teamcode.Util.Tuning.Turret.*;
+import static org.firstinspires.ftc.teamcode.Util.RobotStates.Turret.*;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -14,7 +16,7 @@ public class Turret {
     private DcMotorEx turretSpinMotor;
     private DcMotorEx turretMotor;
     private Servo hoodServo;
-    private PIDController turretPIDController;
+    private PIDController turretPIDController = new PIDController(TURRET_SPIN_P, TURRET_SPIN_I, TURRET_SPIN_D);
     private double targetSpinPosition;
 
     public void init(HardwareMap hardwareMap){
@@ -67,12 +69,21 @@ public class Turret {
         return turretMotor.getVelocity();
      }
 
-     public void setTurretSpeed(double speed){
-        turretMotor.setVelocity(speed);
+     public void setTurretSpeed(TurretSpeeds state){
+        switch (state) {
+            case FULL -> turretMotor.setVelocity(TURRET_MAX_SPEED);
+            case HALF -> turretMotor.setVelocity(TURRET_MAX_SPEED / 2);
+            case STOP -> turretMotor.setVelocity(0);
+        }
      }
 
-     public void setHoodPosition(double pos){
-        hoodServo.setPosition(pos);
+     public void setHoodPosition(HoodStates state){
+        switch (state){
+            case UP -> hoodServo.setPosition(1);
+            case HALFWAY -> hoodServo.setPosition(0.5);
+            case LOW -> hoodServo.setPosition(0);
+        }
+
      }
 
 }
