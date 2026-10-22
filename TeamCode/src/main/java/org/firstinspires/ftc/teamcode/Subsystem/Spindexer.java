@@ -23,15 +23,17 @@ private RobotStates.SpindexerStates dexterState;
         this.dexter.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(DEXTER_P, DEXTER_I, DEXTER_D, 0.1, MotorControlAlgorithm.PIDF));
         this.dexter.setPositionPIDFCoefficients(DEXTER_P);
     }
-    public void run(RobotStates.SpindexerStates state){
-        this.dexterState = state;
-        this.dexter.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        if(state == SpindexerStates.NEUTRAL){
-            state = SpindexerStates.ROTATING;
-        }else{
-            state = SpindexerStates.NEUTRAL;
+    public void run(){
+        if((dexterState != SpindexerStates.NEUTRAL) || (dexterState != SpindexerStates.ROTATING)){
+            dexterState = SpindexerStates.NEUTRAL;
         }
-        switch (state){
+        this.dexter.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        if(dexterState == SpindexerStates.NEUTRAL){
+            dexterState = SpindexerStates.ROTATING;
+        }else{
+            dexterState = SpindexerStates.NEUTRAL;
+        }
+        switch (dexterState){
             case NEUTRAL:
                 this.dexter.setPower(0);
                 break;

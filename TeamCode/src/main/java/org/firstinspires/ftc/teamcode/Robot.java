@@ -46,7 +46,7 @@ public class Robot extends OpMode {
             this.dexter.gotoPos(RobotStates.SpindexerStates.P4);
         }
         if(DEXTER_TOGGLE.get()){
-            System.out.println("OWO");
+            this.dexter.run();
         }
         doTelemetry();
     }
