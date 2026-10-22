@@ -42,39 +42,34 @@ private RobotStates.SpindexerStates dexterState;
     }
     public void gotoPos(RobotStates.SpindexerStates state){
         this.dexterState = state;
-        this.dexter.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         switch (state){
             case P1:
                 System.out.println("1");
                 this.dexter.setTargetPosition(0);
-                this.dexter.setPower(.9);
                 this.dexter.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                this.dexter.setPower(0);
                 break;
             case P2:
                 System.out.println("2");
                 this.dexter.setTargetPosition(9);
-                this.dexter.setPower(.9);
                 this.dexter.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                this.dexter.setPower(0);
                 break;
             case P3:
                 System.out.println("3");
                 this.dexter.setTargetPosition(18);
-                this.dexter.setPower(.9);
                 this.dexter.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                this.dexter.setPower(0);
                 break;
             case P4:
                 System.out.println("4");
-                this.dexter.setTargetPosition(27);
-                this.dexter.setPower(.9);
+                this.dexter.setTargetPosition(27);;
                 this.dexter.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                this.dexter.setPower(0);
                 break;
             default:
                 System.out.println("KFC");
         }
+        while(this.dexter.isBusy()){
+            this.dexter.setPower(.9);
+        }
+        this.dexter.setPower(0);
     }
     public void addTelemetry(Telemetry telemetry) {
         telemetry.addData("State", this.dexterState);
