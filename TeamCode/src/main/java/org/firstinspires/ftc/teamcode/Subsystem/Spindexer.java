@@ -24,6 +24,7 @@ private RobotStates.SpindexerStates dexterState;
         this.dexter = hardwareMap.get(DcMotorEx.class, SPINDEXER_ID);
         this.dexter.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(DEXTER_P, DEXTER_I, DEXTER_D, 0.1, MotorControlAlgorithm.PIDF));
         this.dexter.setPositionPIDFCoefficients(DEXTER_P);
+//        this.dexter.setZeroPowerBehavior();
     }
     public void run(){
         this.dexter.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -43,7 +44,7 @@ private RobotStates.SpindexerStates dexterState;
     }
     public void gotoPos(RobotStates.SpindexerStates state){
         this.dexterState = state;
-        this.dexter.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+//        this.dexter.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         switch (state){
             case P1:
                 System.out.println("1");
@@ -53,17 +54,20 @@ private RobotStates.SpindexerStates dexterState;
                 break;
             case P2:
                 System.out.println("2");
-                this.dexter.setTargetPosition(9);
+                this.dexter.setTargetPosition(7);
+                desiredPos = this.dexter.getTargetPosition();
                 this.dexter.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
                 break;
             case P3:
                 System.out.println("3");
-                this.dexter.setTargetPosition(18);
+                this.dexter.setTargetPosition(14);
+                desiredPos = this.dexter.getTargetPosition();
                 this.dexter.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
                 break;
             case P4:
                 System.out.println("4");
-                this.dexter.setTargetPosition(27);
+                this.dexter.setTargetPosition(21);
+                desiredPos = this.dexter.getTargetPosition();
                 this.dexter.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
                 break;
         }
