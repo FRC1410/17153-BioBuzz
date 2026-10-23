@@ -29,6 +29,7 @@ public class Robot extends OpMode {
 
     @Override
     public void loop() {
+        this.dexter.updatePos();
         if(DEXTER_P1.get()){
             System.out.println("HI");
             this.dexter.gotoPos(RobotStates.SpindexerStates.P1);
