@@ -1,0 +1,26 @@
+### Next steps for DYN:
+ - Ensure new OpMode loop thread is stable
+ - Make DYN Docs
+   - Landing page
+   - 'From null to full" DYN auto quickstart guide`
+     - Install
+     - programming DYN code
+     - running DYN code
+       - android assets
+       - USB/SD card
+     - DynOpMode & its minimal caveats
+   - Variable docs
+   - Command docs
+   - PP integration docs
+   - RR integration docs
+   - Custom pather integration docs
+   - Example DYN scrips
+ - Revise thread error handling code
+ - DYN function revamp
+   - input args
+   - return value
+   - vertical variable scope
+     - Variables can only be referenced form themselves and their parent.
+   - global variable system
+ - Add raw motor control
+ - ~~Let~~Make the singe DYN dev ~~sleep~~keep working
