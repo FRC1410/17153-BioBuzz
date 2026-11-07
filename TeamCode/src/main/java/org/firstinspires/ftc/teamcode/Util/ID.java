@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.Util;
 
 public class ID {
     //Dexter
+    public static final String SPINSERVOID = "Spin";
+    public static final String TRANSFERSERVOID = "Trans";
     public static final String SPINDEXER_ID = "0";
 
     //Control hub things for later
