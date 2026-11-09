@@ -4,7 +4,7 @@ public class ID {
     //Dexter
     public static final String SPINSERVOID = "Spin";
     public static final String TRANSFERSERVOID = "Trans";
-    public static final String SPINDEXER_ID = "0";
+    public static final String SPINDEXER_ID = "Dexter";
 
     //Control hub things for later
     public static final String CONTROL_HUB_IMU = "IMU";
