@@ -15,6 +15,8 @@ import java.io.InputStreamReader;
 import java.util.List;
 
 public class DYNFileReader {
+    // TODO: add support for MicroSD
+    // TODO: add support for dedicated on-device folder for when adb DYN utils are made.
     private final boolean isOnUSB;
     private final HardwareMap hardwareMap;
     public DYNFileReader(HardwareMap HWM) {
