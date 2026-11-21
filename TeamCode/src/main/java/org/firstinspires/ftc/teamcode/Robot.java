@@ -22,6 +22,9 @@ public class Robot extends OpMode {
 
     @Override
     public void loop() {
-        this.turret.setTargetSpinPosition(Math.atan2(controlScheme.SPIN_TURRET_Y.get(), controlScheme.SPIN_TURRET_X.get()) / 360);
+        this.turret.setTargetSpinPosition(
+                (Math.atan2(controlScheme.SPIN_TURRET_Y.get(), controlScheme.SPIN_TURRET_X.get())+Math.PI)
+                /(2*Math.PI)); // bring into range of 0-1 to align with
+        this.turret.goToTargetPos();
     }
 }
