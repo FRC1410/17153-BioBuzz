@@ -1,12 +1,10 @@
 package org.firstinspires.ftc.teamcode;
 
-import android.widget.ToggleButton;
-
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.Subsystem.Drivetrain;
-import org.firstinspires.ftc.teamcode.Util.DriverUtil.ControlScheme;
+import org.firstinspires.ftc.teamcode.Util.ControlScheme;
 import org.firstinspires.ftc.teamcode.Util.Toggle;
 
 @TeleOp
