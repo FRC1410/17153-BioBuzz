@@ -1,5 +1,12 @@
 package org.firstinspires.ftc.teamcode.Util;
 
 public class IDs {
+    public static final String FRONT_LEFT_MOTOR_ID = "0";
+    public static final String BACK_LEFT_MOTOR_ID = "2";
+    public static final String FRONT_RIGHT_MOTOR_ID = "3";
+    public static final String BACK_RIGHT_MOTOR_ID = "4";
+    public static final String CONTROL_HUB_IMU = "IMU";
+
+
     public static final String INTAKE_MOTOR_ID = ""; //To be assigned
 }
