@@ -1,11 +1,7 @@
 package org.firstinspires.ftc.teamcode.Vision;
 
 import static org.firstinspires.ftc.teamcode.Util.IDs.Vision.CAM_ID;
-import static org.firstinspires.ftc.teamcode.Vision.VisionConstants.CAM_OFFSET_X;
-import static org.firstinspires.ftc.teamcode.Vision.VisionConstants.CAM_OFFSET_Y;
-import static org.firstinspires.ftc.teamcode.Vision.VisionConstants.TAG_WIDTH;
-import static org.firstinspires.ftc.teamcode.Vision.VisionConstants.TERMINAL_ANGLE_VECTOR;
-
+import static org.firstinspires.ftc.teamcode.Vision.VisionConstants.*;
 import android.util.Size;
 
 import com.pedropathing.math.Pose;
