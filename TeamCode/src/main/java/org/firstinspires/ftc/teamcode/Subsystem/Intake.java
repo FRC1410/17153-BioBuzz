@@ -8,6 +8,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 public class Intake {
     private DcMotorEx intake1;
 
@@ -18,13 +20,12 @@ public class Intake {
 
         this.intake1.setDirection(FORWARD);
 
-        this.intake1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        this.intake1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         this.intake1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
     public void runIntake(double motorSpeed) {
-        this.intake1.setVelocity(motorSpeed * TICKS_PER_REVOLUTION);
+        this.intake1.setPower(motorSpeed);
     }
-
 }
