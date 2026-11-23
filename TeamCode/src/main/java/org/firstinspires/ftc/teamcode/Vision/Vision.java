@@ -1,9 +1,10 @@
-package org.firstinspires.ftc.teamcode.vision;
+package org.firstinspires.ftc.teamcode.Vision;
 
-import static org.firstinspires.ftc.teamcode.vision.VisionConstants.CAM_OFFSET_X;
-import static org.firstinspires.ftc.teamcode.vision.VisionConstants.CAM_OFFSET_Y;
-import static org.firstinspires.ftc.teamcode.vision.VisionConstants.TAG_WIDTH;
-import static org.firstinspires.ftc.teamcode.vision.VisionConstants.TERMINAL_ANGLE_VECTOR;
+import static org.firstinspires.ftc.teamcode.Util.IDs.Vision.CAM_ID;
+import static org.firstinspires.ftc.teamcode.Vision.VisionConstants.CAM_OFFSET_X;
+import static org.firstinspires.ftc.teamcode.Vision.VisionConstants.CAM_OFFSET_Y;
+import static org.firstinspires.ftc.teamcode.Vision.VisionConstants.TAG_WIDTH;
+import static org.firstinspires.ftc.teamcode.Vision.VisionConstants.TERMINAL_ANGLE_VECTOR;
 
 import android.util.Size;
 
@@ -17,23 +18,23 @@ import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagLibrary;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
-import org.firstinspires.ftc.vision.apriltag.AprilTagSingleDetection;
 
 import java.util.ArrayList;
 
 public class Vision {
     public VisionPortal vision_portal;
     public AprilTagProcessor april_tag;
-    private ArrayList<AprilTagSingleDetection> detections;
+    private ArrayList<AprilTagDetection> detections;
 
     public Vision(HardwareMap hardwareMapCool) {
         // NOTE: The values/configs here are very finicky, don't change them unless absolutely necessary
         // comment form EonCuber28: ok 👍 :) (as of Mar 25 2026, i have changed some things due to a guide i found)
         try {
+            detections = new ArrayList<AprilTagDetection>(0);
             VisionConstants.initMap();
             // this defines all the wanted keys for us
             AprilTagLibrary.Builder tagLib = new AprilTagLibrary.Builder();
-            for (int tagID : new int[]{0}){
+            for (int tagID : VisionConstants.idPivotMap.keySet()){
                 tagLib.addTag(tagID, "TagID"+tagID, TAG_WIDTH, DistanceUnit.INCH);
             }
             // This is the camera data, and where we get said data.
@@ -48,7 +49,7 @@ public class Vision {
                     .build();
             // This is the connection to the physical camera, including the id
             VisionPortal.Builder vision_portal_builder = new VisionPortal.Builder();
-            vision_portal_builder.setCamera(hardwareMapCool.get(WebcamName.class,"WEBCAM_ID")); // TODO: put in IDs class
+            vision_portal_builder.setCamera(hardwareMapCool.get(WebcamName.class,CAM_ID)); // TODO: put in IDs class
             vision_portal_builder.setCameraResolution(new Size(640, 480));
             vision_portal_builder.addProcessor(april_tag);
 
@@ -85,7 +86,7 @@ public class Vision {
         return out;
     }
 
-    public double[] getRobotPoseFromTag(AprilTagSingleDetection tag){
+    public double[] getRobotPoseFromTag(AprilTagDetection tag){
         return null; // TODO
     }
 
@@ -100,9 +101,9 @@ public class Vision {
     public void update(){
         detections.clear();
         for (AprilTagDetection detection : april_tag.getDetections()){
-            if (detection instanceof AprilTagSingleDetection){ // filter out cluster detections that have no IDs to ensure that we have only apriltags with IDs.
-                detections.add((AprilTagSingleDetection)detection);
-            }
+//            if (detection instanceof AprilTagSingleDetection){ // filter out cluster detections that have no IDs to ensure that we have only apriltags with IDs.
+                detections.add(detection);
+//            }
         }
     }
 
@@ -122,5 +123,14 @@ public class Vision {
         }
         lastPose = newPose;
         return false;
+    }
+
+    public AprilTagDetection getDetection() {
+        update();
+        if (!detections.isEmpty()) {
+            return detections.get(0);
+        } else {
+            return null;
+        }
     }
 }
